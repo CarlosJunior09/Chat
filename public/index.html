@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bate-papo Node.Js e Socket.io</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+    <header>
+
+        <div class="contato">
+    
+            <img src="img/botaoVolta.png" alt="">
+
+            <input type="file" id="fotoPerfil" accept="image/*" style="display: none;">
+
+            <label for="fotoPerfil">
+                <img id="fotoPerfilPreview" src="img/semFoto.png" alt="Foto de perfil" style="border-radius: 50%; width: 50px; height: 50px;">
+            </label>
+
+            <span id="nomeUsuario"></span>
+            <input style="margin-left: 5px;" type="text" id="nome" placeholder="Seu nome de usuário">
+            
+            <br><br>
+
+            <div class="icone">
+                <img src="img/video-chamada.png" alt="">
+                <img src="img/telefone.png" alt="">
+                <img src="img/menu.png" alt="">
+            </div>
+    
+        </div>
+    
+    </header>
+
+
+<main>
+
+    <div id="mensagens-container">
+        <ul class="container" id="mensagens"></ul>
+    </div>
+    
+
+
+    <div id="formulario">
+
+        <form>
+
+            <input type="text" id="mensagem" placeholder="  Sua mensagem">
+            <button class="botao"><img src="img/enviar.png" style="height: 50px;" alt=""></button>
+
+        </form>
+
+    </div>
+
+</main>
+
+
+<footer>
+
+</footer>
+
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+
+<script>
+    //Criar uma instancia do socket.io
+    const socket = io();
+
+    //Seleciona o valor do input nome de usuário
+    const nomeInput = document.getElementById('nome');
+
+    //Seleciona o valor do input da mensagem
+    const mensagemInput = document.getElementById('mensagem');
+
+    // Evento de seleção de arquivo para a foto de perfil
+    document.getElementById('fotoPerfil').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const fotoPerfilPreview = document.getElementById('fotoPerfilPreview');
+                fotoPerfilPreview.src = event.target.result;
+                fotoPerfilPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    //Evento do envio do formulário
+    document.querySelector('form').addEventListener('submit', event => {
+        //Padrão os envios
+        event.preventDefault();
+        const nome = nomeInput.value;
+        const mensagem = mensagemInput.value;
+
+        //verifica se os valores estão em branco
+        if (nome.trim() && mensagem.trim()) {
+            const fotoPerfil = document.getElementById('fotoPerfil').files[0];
+            enviarMensagem(nome, mensagem, fotoPerfil);
+        }
+
+        //Limpar o input da mensagem
+        mensagemInput.value = '';
+
+        //Desabilita o input nome do usuário
+        nomeInput.disabled = true;
+    });
+
+    // Função para enviar mensagem, incluindo foto de perfil
+    function enviarMensagem(nome, mensagem, fotoPerfil) {
+        const formData = new FormData();
+        formData.append('nome', nome);
+        formData.append('mensagem', mensagem);
+        if (fotoPerfil) {
+            formData.append('fotoPerfil', fotoPerfil);
+        }
+        socket.emit('chat message', formData);
+    }
+
+    socket.on('chat message', dados => {
+        //Criar um elemento de lista para exibir a mensagem
+        const lista = document.createElement('li');
+
+        //Define o texto da mensagem
+        lista.textContent = `${dados.nome}: ${dados.mensagem}`;
+
+        // Adicionando uma classe CSS para mensagens do lado direito se o nome for diferente
+        if (dados.nome !== nomeInput.value) {
+            lista.classList.add('mensagem-direita');
+        } else {
+            lista.classList.add('mensagem-esquerda');
+        }
+
+        //Adicionar o elemento de lista de mensagem
+        mensagens.appendChild(lista);
+
+        mensagensContainer.scrollTop = mensagensContainer.scrollHeight;
+    });
+
+    // Função para enviar mensagem, incluindo foto de perfil
+function enviarMensagem(nome, mensagem, fotoPerfil) {
+    const formData = new FormData();
+    formData.append('nome', nome);
+    formData.append('mensagem', mensagem);
+    if (fotoPerfil) {
+        formData.append('fotoPerfil', fotoPerfil);
+    }
+    socket.emit('chat message', Object.fromEntries(formData));
+}
+
+
+</script>
+</body>
+</html>
